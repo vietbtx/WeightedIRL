@@ -21,8 +21,8 @@ class StateIndependentPolicy(nn.Module):
     def forward(self, states):
         return torch.tanh(self.net(states))
 
-    def sample(self, states):
-        actions, log_pis = reparameterize(self.net(states), self.log_stds)
+    def sample(self, states, add_noise=True):
+        actions, log_pis = reparameterize(self.net(states), self.log_stds, add_noise)
         return actions, log_pis
 
     def evaluate_log_pi(self, states, actions):

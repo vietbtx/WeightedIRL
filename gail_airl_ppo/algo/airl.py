@@ -4,9 +4,7 @@ import torch.nn.functional as F
 from torch.optim import Adam
 
 from .ppo import PPO
-from .sac import SAC
 from gail_airl_ppo.network import AIRLDiscrim
-
 
 class AIRL(PPO):
 
@@ -66,11 +64,9 @@ class AIRL(PPO):
 
         # We don't use reward signals here,
         states, actions, _, dones, log_pis, next_states = self.buffer.get()
-        # print("states:", states.shape)
 
         # Calculate rewards.
         rewards = self.disc.calculate_reward(states, actions, dones, log_pis, next_states)
-        # rewards[dones==0] = 0
         
         # Update PPO using estimated rewards.
         self.update_ppo(states, actions, rewards, dones, log_pis, next_states, writer)

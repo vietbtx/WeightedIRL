@@ -4,8 +4,7 @@ import torch
 from gail_airl_ppo.env import make_env
 from gail_airl_ppo.buffer import SerializedBuffer
 from gail_airl_ppo.trainer import Trainer
-from gail_airl_ppo.algo.gail import GAIL
-from gail_airl_ppo.algo.airl import AIRL
+from gail_airl_ppo.algo import GAIL, AIRL
 
 def run(args):
     env = make_env(args.env_id)
@@ -19,15 +18,13 @@ def run(args):
     if args.weighted:
         algo_name = "w" + algo_name
     if args.algo == "gail":
-        Algo = GAIL
+        ALGO = GAIL
     elif args.algo == "airl":
-        Algo = AIRL
+        ALGO = AIRL
         if args.state_only:
             algo_name = algo_name + "_state_only"
 
-    print("args:", args)
-
-    algo = Algo(
+    algo = ALGO(
         buffer_exp=buffer_exp,
         state_shape=env.observation_space.shape,
         action_shape=env.action_space.shape,
@@ -50,7 +47,7 @@ def run(args):
         seed=args.seed
     )
     trainer.train()
-
+    
     if len(args.test_env_id) > 0: # Transfer Learning
         algo.train_irl = False
         algo.epoch_ppo = 100
@@ -65,7 +62,7 @@ def run(args):
             seed=args.seed
         )
         trainer.train()
-
+        
 
 if __name__ == '__main__':
     p = argparse.ArgumentParser()

@@ -21,6 +21,42 @@ def calculate_gae(values, rewards, dones, next_values, gamma, lambd):
 
     return gaes + values, (gaes - gaes.mean()) / (gaes.std() + 1e-8)
 
+class MuNetwork(nn.Module):
+
+    def __init__(self, state_shape, action_shape, hidden_units, hidden_activation, actor=None, state_only=False):
+        super().__init__()
+        if state_only:
+            input_dim = state_shape[0]
+            output_dim = 1
+        else:
+            input_dim = state_shape[0] + action_shape[0]
+            output_dim = action_shape[0]
+        self.mu = build_mlp(
+            input_dim=input_dim,
+            output_dim=output_dim,
+            hidden_units=hidden_units,
+            hidden_activation=hidden_activation
+        )
+        self.state_only = state_only
+        self.actor = actor
+    
+    def forward(self, states, actions=None):
+        if self.state_only:
+            mu = self.mu(states)
+        else:
+            mu = self.mu(torch.cat([states, actions], dim=-1))
+        return mu
+    
+    def calculate_mu(self, states):
+        with torch.no_grad():
+            if not isinstance(states, torch.Tensor):
+                states = torch.FloatTensor([states[0], states[1], 0])
+            if self.state_only:
+                return self.forward(states)
+            else:
+                actions = self.actor(states)
+                return torch.mean(self.forward(states, actions))
+
 
 class PPO(Algorithm):
 
@@ -74,12 +110,13 @@ class PPO(Algorithm):
         self.optim_actor = Adam(self.actor.parameters(), lr=self.lr_actor)
         self.optim_critic = Adam(self.critic.parameters(), lr=self.lr_critic)
         if self.weighted:
-            self.mu = build_mlp(
-                input_dim=self.state_shape[0] + self.action_shape[0],
-                output_dim=self.action_shape[0],
+            self.mu = MuNetwork(
+                self.state_shape, 
+                self.action_shape,
                 hidden_units=(100, 100),
-                hidden_activation=nn.ReLU(inplace=True)
-            )
+                hidden_activation=nn.ReLU(inplace=True),
+                actor=self.actor
+            ).to(self.device)
         else:
             self.mu = None
 
@@ -92,11 +129,9 @@ class PPO(Algorithm):
         next_state, reward, done, _ = env.step(action)
         mask = False if t == env._max_episode_steps else done
         self.buffer.append(state, action, reward, mask, log_pi, next_state)
-
         if done:
             t = 0
             next_state = env.reset()
-
         return next_state, t
 
     def update(self, writer):
@@ -130,7 +165,7 @@ class PPO(Algorithm):
     def update_actor(self, states, actions, log_pis_old, gaes, writer):
         log_pis = self.actor.evaluate_log_pi(states, actions)
         if self.mu:
-            mu = self.mu(torch.cat([states, actions], dim=-1))
+            mu = self.mu(states, actions)
             entropy = - (mu * log_pis).mean()
         else:
             entropy = - log_pis.mean()

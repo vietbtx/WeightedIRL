@@ -3,7 +3,7 @@ import argparse
 import torch
 import airl_envs
 from gail_airl_ppo.env import make_env
-from gail_airl_ppo.algo.sac import SAC
+from gail_airl_ppo.algo import SAC
 from gail_airl_ppo.trainer import Trainer
 
 def run(args):

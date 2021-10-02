@@ -1,9 +1,13 @@
+from gail_airl_ppo.network.utils import calculate_log_pi
+from gail_airl_ppo.algo import GAIL, AIRL
 import os
 from time import time, sleep
 from datetime import timedelta
 from tqdm import tqdm
 from torch.utils.tensorboard import SummaryWriter
-
+import torch
+import numpy as np
+from create_heatmap import plot_heatmap
 
 class Trainer:
 
@@ -34,6 +38,21 @@ class Trainer:
         self.eval_interval = eval_interval
         self.num_eval_episodes = num_eval_episodes
 
+    def calculate_reward(self, states):
+        with torch.no_grad():
+            qpos = np.array([states[0] - 0.3, states[1]])
+            qvel = np.array([0, 0])
+            self.env_test.reset()
+            self.env_test.set_state(qpos, qvel)
+            states = torch.FloatTensor([[states[0], states[1], 0]])
+            actions, log_pis = self.algo.actor.sample(states, add_noise=False)
+            if isinstance(self.algo, GAIL):
+                rewards = self.algo.disc.calculate_reward(states, actions, log_pis)
+            elif isinstance(self.algo, AIRL):
+                rewards = self.algo.disc.calculate_reward(states, actions, True, log_pis, states)
+            rewards = torch.mean(rewards)
+        return rewards
+
     def train(self):
         # Time to start training.
         self.start_time = time()
@@ -54,6 +73,11 @@ class Trainer:
             if step % self.eval_interval == 0:
                 self.evaluate(step)
                 self.algo.save_models(os.path.join(self.model_dir, f'step{step}'))
+
+                if self.env.env_id.startswith("PointMaze"):
+                    if self.algo.weighted:
+                        plot_heatmap(self.algo.mu.calculate_mu, f"{self.log_dir}/mu_{step}", self.algo.train_irl)
+                    plot_heatmap(self.calculate_reward, f"{self.log_dir}/reward_{step}", self.algo.train_irl)
 
         # Wait for the logging to be finished.
         sleep(10)

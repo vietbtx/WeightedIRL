@@ -9,8 +9,6 @@ from gail_airl_ppo.utils import soft_update, disable_gradient
 from gail_airl_ppo.network import (
     StateDependentPolicy, TwinnedStateActionFunction
 )
-from gail_airl_ppo.network.utils import build_mlp
-
 
 class SAC(Algorithm):
 

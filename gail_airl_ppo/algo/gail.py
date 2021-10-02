@@ -37,21 +37,23 @@ class GAIL(PPO):
         self.optim_disc = Adam(self.disc.parameters(), lr=lr_disc)
         self.batch_size = batch_size
         self.epoch_disc = epoch_disc
+        self.train_irl = True
 
     def update(self, writer):
         self.learning_steps += 1
 
-        for _ in range(self.epoch_disc):
-            self.learning_steps_disc += 1
+        if self.train_irl:
+            for _ in range(self.epoch_disc):
+                self.learning_steps_disc += 1
 
-            # Samples from current policy's trajectories.
-            states, actions, _, _, log_pis, _ = self.buffer.sample(self.batch_size)
-            # Samples from expert's demonstrations.
-            states_exp, actions_exp = self.buffer_exp.sample(self.batch_size)[:2]
-            # Update discriminator.
-            with torch.no_grad():
-                log_pis_exp = self.actor.evaluate_log_pi(states_exp, actions_exp)
-            self.update_disc(states, actions, log_pis, states_exp, actions_exp, log_pis_exp, writer)
+                # Samples from current policy's trajectories.
+                states, actions, _, _, log_pis, _ = self.buffer.sample(self.batch_size)
+                # Samples from expert's demonstrations.
+                states_exp, actions_exp = self.buffer_exp.sample(self.batch_size)[:2]
+                # Update discriminator.
+                with torch.no_grad():
+                    log_pis_exp = self.actor.evaluate_log_pi(states_exp, actions_exp)
+                self.update_disc(states, actions, log_pis, states_exp, actions_exp, log_pis_exp, writer)
 
         # We don't use reward signals here,
         states, actions, _, dones, log_pis, next_states = self.buffer.get()
@@ -77,8 +79,7 @@ class GAIL(PPO):
         self.optim_disc.step()
 
         if self.learning_steps_disc % self.epoch_disc == 0:
-            writer.add_scalar(
-                'loss/disc', loss_disc.item(), self.learning_steps)
+            writer.add_scalar('loss/disc', loss_disc.item(), self.learning_steps)
 
             # Discriminator's accuracies.
             with torch.no_grad():

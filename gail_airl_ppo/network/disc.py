@@ -33,9 +33,6 @@ class GAILDiscrim(nn.Module):
         with torch.no_grad():
             return -F.logsigmoid(-self.forward(states, actions, log_pis))
 
-# D = - log_sigmoid(-x)
-# x = log(1-e^D)
-# D2 = - log_sigmoid(x - t) = - log_sigmoid(log(1-e^D) - t)
 
 class AIRLDiscrim(nn.Module):
 
@@ -79,18 +76,11 @@ class AIRLDiscrim(nn.Module):
 
     def forward(self, states, actions, dones, log_pis, next_states):
         if self.mu is not None:
-            mu = self.mu(torch.cat([states, actions], dim=-1))
+            mu = self.mu(states, actions)
             log_pis = mu * log_pis
         return self.f(states, actions, dones, next_states) - log_pis
-        
 
     def calculate_reward(self, states, actions, dones, log_pis, next_states):
         with torch.no_grad():
             logits = self.forward(states, actions, dones, log_pis, next_states)
             return -F.logsigmoid(-logits)
-
-# D(s,a) = - log_sigmoid(log_pi - f)
-# D2 = - log_sigmoid(mu * log_pi - f)
-# D(s,a)/D2 = log_sigmoid(log_pi - f) / log_sigmoid(mu * log_pi - f)
-# = log(1/(1+exp(f - log_pi) - 1/(1+exp(f - mu * log_pi)))
-# = log()
