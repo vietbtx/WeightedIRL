@@ -51,7 +51,7 @@ We evaluate on Mujoco tasks and transfer learning tasks with 8 different seeds w
 </p>
 
 ## Notes:
-- [x] This code is based on gail-airl-ppo.pytorch repository [^ku2482].
+- [x] This code is based on the gail-airl-ppo.pytorch repository [^ku2482].
 - [x] The transfer environments are pulled from the official AIRL repository [^justinjfu]
 
 [^ku2482]: PyTorch implementation of GAIL and AIRL based on PPO. https://github.com/ku2482/gail-airl-ppo.pytorch
