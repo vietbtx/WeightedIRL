@@ -34,28 +34,8 @@ Each expert tested with 6 imitation algorithms based on 2 existed studies: GAIL[
 ## Examples
 Checking *run_mujoco.cmd*, *run_disabled_ant.cmd*, *run_point_maze.cmd* for more details.
 
-## Experimental Results
+## Experimental Settings
 We evaluate on Mujoco tasks and transfer learning tasks with 8 different seeds without tunning hyperparameters.
-
-### Mujoco results
-
-| Algorithms | Reacher-v2 | Walker2d-v2 | HumanoidStandup-v2 |
-| --- | --- | --- | --- |
-| GAIL | -7.60±1.98˜ | 288.15±48.59˜ | 102403±16027˜ |
-| Weighted GAIL | -5.93±0.87˜ | 944.96±568.05˜ | 105345±10087˜ |
-| AIRL | -5.23±0.83˜ | 157.74±22.46˜ | 79120±27524˜ |
-| Weighted AIRL | **-5.18±0.65** | **1562.1±945.3** | **143589±9298** |
-
-### Transfer learning results
-
-| Algorithms | Ant-Disabled | Point Mass-Maze |
-| --- | --- | --- |
-| GAIL | 1.31±7.67 | -24.37±11.82 |
-| Weighted GAIL | 14.29±36.33 | **-7.40±0.43** |
-| AIRL | -15.79±4.25 | -28.75±1.07 |
-| Weighted AIRL | -8.19±4.54 | -13.81±1.19 |
-| AIRL state-only | 111.71±18.35 | -8.87±0.79 |
-| Weighted AIRL state-only | **298.09±42.18** | -8.82±0.20 |
 
 ## Visualization
 
